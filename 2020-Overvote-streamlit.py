@@ -223,7 +223,7 @@ def main():
 
         /* Adjust the block-container size */
         .block-container {
-            max-width: 60% !important;
+            max-width: 70% !important;
             margin: auto;
             padding: 0;
             overflow: hidden;  /* Prevent scrolling */
@@ -277,7 +277,7 @@ def main():
     # Display disclaimer if the end year is 2024
     if end_year == 2024:
         st.markdown(
-            "<span style='color: red; font-weight: bold;'>&#42;&#42;&#42;2024 Election Data Is Preliminary; Final Vote Counts to Be Updated When AZ/CA Learn to Count&#42;&#42;&#42;</span>",
+            "<span style='color: red; font-weight: bold;'>&#42;&#42;&#42;2024 Election Data Is Preliminary&#42;&#42;&#42;</span>",
             unsafe_allow_html=True
         )
 
