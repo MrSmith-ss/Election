@@ -83,7 +83,6 @@ def generate_all_states_chart(input_excel_file, start_year, end_year, parties, m
         selected_state = old_state
         #print(selected_state)
         
-        
     else:
         print("Filters have not changed.")
         flag = 1
@@ -91,11 +90,6 @@ def generate_all_states_chart(input_excel_file, start_year, end_year, parties, m
             selected_state = old_state
             flag2 = 0
         
-        # Reset the selected state to the first state in the list
-        #selected_state = sorted_states[0]  # Assuming sorted_states is defined earlier
-        #selected_state = old_state
-       
-
     # Save the current filter parameters in session_state for later comparison
     st.session_state['filter_params2'] = current_filter_params
 
@@ -237,10 +231,13 @@ def main():
         """, 
         unsafe_allow_html=True
     )
-        # Define the Excel file path relative to the script's location
+    
+    # Define the Excel file path relative to the script's location
     script_dir = os.path.dirname(os.path.abspath(__file__))
     input_excel_file = os.path.join(script_dir, "2000-2024 Election Data.xlsx")
     sheet_name = "Output"
+    # Excel data generated from:
+    #https://www.fec.gov/introduction-campaign-finance/election-results-and-voting-information/
 
     # Sidebar inputs with 4-year steps for the start and end years
     start_year = st.sidebar.number_input("Start Year", min_value=2000, max_value=2024, value=2000, step=4)
