@@ -223,7 +223,7 @@ def main():
 
         /* Adjust the block-container size */
         .block-container {
-            max-width: 65% !important;
+            max-width: 75% !important;
             margin: auto;
             padding: 0;
             overflow: hidden;  /* Prevent scrolling */
