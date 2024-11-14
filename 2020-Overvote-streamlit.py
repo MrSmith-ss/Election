@@ -281,7 +281,7 @@ def main():
     # Display disclaimer if the end year is 2024
     if end_year == 2024:
         st.markdown(
-            "<span style='color: red; font-weight: bold;'>&#42;&#42;&#42;2024 Election Data Is Preliminary&#42;&#42;&#42;</span>",
+            "<span style='color: red; font-weight: bold;'>&#42;&#42;&#42;2024 Election 2222Data Is Preliminary&#42;&#42;&#42;</span>",
             unsafe_allow_html=True
         )
 
