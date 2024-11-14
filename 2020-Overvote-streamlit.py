@@ -5,20 +5,23 @@ from openpyxl import load_workbook
 import matplotlib.pyplot as plt
 import streamlit as st
 
-def generate_all_states_chart(input_excel_file, start_year, end_year, parties, mode='A', selected_state=None):
-    # Load the data from the Output sheet
-    df = pd.read_excel(input_excel_file, sheet_name='Output')
+@st.cache_data(ttl=36000)
+def load_data(sheet_name):
+    # Define the Excel file path relative to the script's location
+    # Excel data generated from:  #https://www.fec.gov/introduction-campaign-finance/election-results-and-voting-information/
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    input_excel_file = os.path.join(script_dir, "2000-2024 Election Data.xlsx")
+    # Load the data once
+    return pd.read_excel(input_excel_file, sheet_name='Output')
 
-    # Filter data for the selected year range
-    filtered_df = df[
-        (df['Year'].astype(int) >= start_year) & 
-        (df['Year'].astype(int) <= end_year)
-    ]
+@st.cache_data
+def filter_data(df, start_year, end_year):
+    # Filter data based on the selected year range
+    return df[(df['Year'].astype(int) >= start_year) & 
+              (df['Year'].astype(int) <= end_year)]
 
-    # Get the unique states from the data
-    states = filtered_df['State'].unique()
-
-    # Calculate the sorting criteria based on mode
+@st.cache_data
+def sort_states_by_mode(filtered_df, states, mode):
     if mode in ['D', 'R']:
         differences = []
         for state in states:
@@ -28,23 +31,32 @@ def generate_all_states_chart(input_excel_file, start_year, end_year, parties, m
             # Get the 2020 vote count for the target party
             votes_2020 = state_df[state_df['Year'] == 2020][target_party].values
             if votes_2020.size > 0:
-                # Calculate the highest vote count from non-2020 years
                 non_2020_max = state_df[state_df['Year'] != 2020][target_party].max()
                 if pd.notna(non_2020_max):
                     difference = votes_2020[0] - non_2020_max
                     differences.append((state, difference))
                 else:
-                    differences.append((state, 0))  # If no non-2020 data, set diff to 0
+                    differences.append((state, 0))
             else:
-                differences.append((state, 0))  # If no 2020 data, set diff to 0
+                differences.append((state, 0))
         
         # Sort states based on the computed differences
-        sorted_states = [state for state, _ in sorted(differences, key=lambda x: x[1], reverse=True)]
+        return [state for state, _ in sorted(differences, key=lambda x: x[1], reverse=True)]
     else:
-        sorted_states = states  # No sorting for "A" mode
+        return states
 
-    # Ensure sorted_states is a list (in case it's a numpy array)
-    sorted_states = list(sorted_states)
+def generate_all_states_chart(df, start_year, end_year, parties, mode='A', selected_state=None):
+    # Filter data for the selected year range
+    filtered_df = filter_data(df, start_year, end_year)
+
+    # Get the unique states from the data
+    if 'unique_states' not in st.session_state:
+        unique_states = df['State'].unique()
+        st.session_state['unique_states'] = unique_states
+    else:
+        unique_states = st.session_state['unique_states']
+
+    sorted_states = list(sort_states_by_mode(filtered_df, unique_states, mode))
 
     print('Getting current filter params.')
     # Store current filter parameters as a list
@@ -68,11 +80,10 @@ def generate_all_states_chart(input_excel_file, start_year, end_year, parties, m
         flag2 = 0
 
     # Debug: Print both current and previous filter parameters
-    print(f"Current filter parameters: {current_filter_params}")
-    print(f"Previous filter parameters: {previous_filter_params}")
+    #print(f"Current filter parameters: {current_filter_params}")
+    #print(f"Previous filter parameters: {previous_filter_params}")
 
-    print(f"Old State: {old_state}")
-    #selected_state = old_state
+    #print(f"Old State: {old_state}")
 
     # Compare the current filter params to the previous ones
     if current_filter_params != previous_filter_params:
@@ -93,7 +104,7 @@ def generate_all_states_chart(input_excel_file, start_year, end_year, parties, m
     # Save the current filter parameters in session_state for later comparison
     st.session_state['filter_params2'] = current_filter_params
 
-    print(f"Saving flag2 to: {flag2}")
+    #print(f"Saving flag2 to: {flag2}")
     st.session_state['flag2'] = flag2
 
     # Save the selected_state
@@ -232,13 +243,9 @@ def main():
         unsafe_allow_html=True
     )
     
-    # Define the Excel file path relative to the script's location
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    input_excel_file = os.path.join(script_dir, "2000-2024 Election Data.xlsx")
-    sheet_name = "Output"
-    # Excel data generated from:
-    #https://www.fec.gov/introduction-campaign-finance/election-results-and-voting-information/
-
+     # Load the data from the Output sheet
+    df = load_data("Output")
+    
     # Sidebar inputs with 4-year steps for the start and end years
     start_year = st.sidebar.number_input("Start Year", min_value=2000, max_value=2024, value=2000, step=4)
     end_year = st.sidebar.number_input("End Year", min_value=2000, max_value=2024, value=2024, step=4)
@@ -278,14 +285,8 @@ def main():
             unsafe_allow_html=True
         )
 
-    # Title
-    #st.title("Election Data Visualization")
-    
-    # Retrieve previously selected state from session state
-   # selected_state = st.session_state.get('old_state', None)
-
     # Generate the chart with the mapped mode value and the selected state
-    generate_all_states_chart(input_excel_file, start_year, end_year, parties, mode_mapping[mode])
+    generate_all_states_chart(df, start_year, end_year, parties, mode_mapping[mode])
 
 if __name__ == "__main__":
     main()
