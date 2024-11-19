@@ -4,6 +4,14 @@ import os
 from openpyxl import load_workbook
 import matplotlib.pyplot as plt
 import streamlit as st
+import inspect
+
+def log(variable):
+    # Get the current frame and extract the variable name
+    frame = inspect.currentframe().f_back
+    variable_name = [name for name, value in frame.f_locals.items() if value is variable][0]
+    print(f"The value of {variable_name}: {variable}")
+
 
 @st.cache_data(ttl=36000)
 def load_data(sheet_name):
@@ -70,49 +78,70 @@ def generate_all_states_chart(df, start_year, end_year, parties, mode='A', selec
 
     # Retrieve old state (if available)
     old_state = st.session_state.setdefault('old_state', sorted_states[0])
-
+    old_state_early = st.session_state.setdefault('old_state_early', sorted_states[0])
+    old_state_late = st.session_state.setdefault('old_state_late', sorted_states[0])
+    default_state = st.session_state.setdefault('default_state', sorted_states[0])
+    print(f"Old State Early: {old_state_early}")
+    print(f"Old State Late: {old_state_late}")
     # Retrieve old state (if available)
     flag2 = st.session_state.setdefault('flag2', 0)
+    flag3 = st.session_state.setdefault('flag3', 0)
 
+    print(f"Flag2: {flag2}")
     # Compare the current filter params to the previous ones
     if current_filter_params != previous_filter_params:
         print("Filters have changed.")
         flag = 2
         flag2 = 1
+        flag3 =0
          # Retrieve the selected state from session state or use the first state
         selected_state = old_state
     else:
         print("Filters have not changed.")
         flag = 1
-        if flag2 == 1:
+        if flag3 == 2:
+            print("In flag 3")
+            #selected_state = old_state
+            flag3 = 0
+        elif flag2 == 1:
+            print ("In flag 2")
             selected_state = old_state
+            st.session_state['default_state'] = old_state
+            log(old_state)
             flag2 = 0
+            
+        elif old_state_early == old_state_late:
+            print("They are the same, filters had changed?")
+            selected_state = old_state
         
     # Save the current filter parameters in session_state for later comparison
     st.session_state['filter_params2'] = current_filter_params
 
-    #print(f"Saving flag2 to: {flag2}")
     st.session_state['flag2'] = flag2
+    st.session_state['flag3'] = flag3
    
+    
     # Save the selected_state
-    if flag == 2:
+    if flag == 2: #or flag3 == 2:
         print(f"Saving old_state EARLY to: {selected_state}")
         st.session_state['old_state'] = selected_state
 
 
     # Check if the selected_state is valid
     if selected_state not in sorted_states:
-        print(f"Selected state {selected_state} is not in the list of available states. Resetting to {sorted_states[0]}.")
-        selected_state = sorted_states[0]
+        print(f"Selected state {selected_state} is not in the list of available states. Resetting to {default_state}.")
+        selected_state = default_state
 
     # Streamlit sidebar to select a state (scrollable list box)
     print(f"Eary Selected State: {selected_state}")
+    st.session_state['old_state_early'] = selected_state
     selected_state_index = sorted_states.index(selected_state)
     print(f"Selected State Index: {selected_state_index}")
     selected_state = st.sidebar.radio("Select a State", sorted_states, index=selected_state_index)
     print(f"Selected State Late: {selected_state}")
     # Save the selected_state
     print(f"Late Selected State: {selected_state}")
+    st.session_state['old_state_late'] = selected_state
     if flag == 1:
         print(f"Saving old_state LATER to: {selected_state}")
         st.session_state['old_state'] = selected_state
@@ -211,6 +240,7 @@ def generate_all_states_chart(df, start_year, end_year, parties, mode='A', selec
     # Display the plot in Streamlit
 
     st.pyplot(fig)
+    print("\n")
 
 
 
