@@ -54,6 +54,14 @@ def generate_all_states_chart(df, start_year, end_year, parties, mode='A', selec
 
     sorted_states = list(sort_states_by_mode(filtered_df, unique_states, mode))
 
+    
+
+
+
+
+
+
+
     # Store current filter parameters as a list
     current_filter_params = [start_year, end_year, mode, sorted(parties)]  # sorted(parties) to maintain order
 
@@ -98,7 +106,7 @@ def generate_all_states_chart(df, start_year, end_year, parties, mode='A', selec
         selected_state = sorted_states[0]
 
     # Streamlit sidebar to select a state (scrollable list box)
-   print(f"Eary Selected State: {selected_state}")
+    print(f"Eary Selected State: {selected_state}")
     selected_state_index = sorted_states.index(selected_state)
     print(f"Selected State Index: {selected_state_index}")
     selected_state = st.sidebar.radio("Select a State", sorted_states, index=selected_state_index)
@@ -108,6 +116,17 @@ def generate_all_states_chart(df, start_year, end_year, parties, mode='A', selec
     if flag == 1:
         print(f"Saving old_state LATER to: {selected_state}")
         st.session_state['old_state'] = selected_state
+
+
+
+    
+
+
+
+
+
+
+
 
 
 
