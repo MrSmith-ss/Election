@@ -256,7 +256,7 @@ def main():
 
     # Update the mode names in the selectbox
     mode = st.sidebar.selectbox(
-        "Mode",
+        "Over Vote Mode",
         ["No Filter", "2020 Republican Overvote", "2020 Democrat Overvote"]
     )
 
