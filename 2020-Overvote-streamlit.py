@@ -4,14 +4,6 @@ import os
 from openpyxl import load_workbook
 import matplotlib.pyplot as plt
 import streamlit as st
-import inspect
-
-def log(variable):
-    # Get the current frame and extract the variable name
-    frame = inspect.currentframe().f_back
-    variable_name = [name for name, value in frame.f_locals.items() if value is variable][0]
-    print(f"The value of {variable_name}: {variable}")
-
 
 @st.cache_data(ttl=36000)
 def load_data(sheet_name):
@@ -62,102 +54,49 @@ def generate_all_states_chart(df, start_year, end_year, parties, mode='A', selec
 
     sorted_states = list(sort_states_by_mode(filtered_df, unique_states, mode))
 
-    
-
-
-
-
-
-
-
     # Store current filter parameters as a list
     current_filter_params = [start_year, end_year, mode, sorted(parties)]  # sorted(parties) to maintain order
 
     # Retrieve previous filter parameters (if available)
-    previous_filter_params = st.session_state.setdefault('filter_params2', [])
+    previous_filter_params = st.session_state.setdefault('filter_params2', current_filter_params)
 
     # Retrieve old state (if available)
     old_state = st.session_state.setdefault('old_state', sorted_states[0])
-    old_state_early = st.session_state.setdefault('old_state_early', sorted_states[0])
-    old_state_late = st.session_state.setdefault('old_state_late', sorted_states[0])
     default_state = st.session_state.setdefault('default_state', sorted_states[0])
-    print(f"Old State Early: {old_state_early}")
-    print(f"Old State Late: {old_state_late}")
+
     # Retrieve old state (if available)
     flag2 = st.session_state.setdefault('flag2', 0)
-    flag3 = st.session_state.setdefault('flag3', 0)
 
-    print(f"Flag2: {flag2}")
     # Compare the current filter params to the previous ones
-    if current_filter_params != previous_filter_params:
-        print("Filters have changed.")
-        flag = 2
-        flag2 = 1
-        flag3 =0
-         # Retrieve the selected state from session state or use the first state
-        selected_state = old_state
-    else:
-        print("Filters have not changed.")
-        flag = 1
-        if flag3 == 2:
-            print("In flag 3")
-            #selected_state = old_state
-            flag3 = 0
-        elif flag2 == 1:
-            print ("In flag 2")
-            selected_state = old_state
-            st.session_state['default_state'] = old_state
-            log(old_state)
-            flag2 = 0
-            
-        elif old_state_early == old_state_late:
-            print("They are the same, filters had changed?")
-            selected_state = old_state
+    if current_filter_params != previous_filter_params: #Filters have changed
+        flag = 0 #Set the flag to save the selected state early, before it gets re-written since we are running a filter update
+        flag2 = 1 #Prime to go into flag2 loop when no longer changing filters
+        selected_state = old_state # Retain which state was picked last
+    else: #Filters have not changed
+        flag = 1 #Save the selected state later, after user picks
+        if flag2 == 1: #Flag2 loop to run after coming out of filter updates
+            selected_state = old_state #set our selected state to our old one 
+            st.session_state['default_state'] = old_state #update the default state to the previous old state. This is really imporant to prevent it from jumping around
+            flag2 = 0 #Reset flag2
         
     # Save the current filter parameters in session_state for later comparison
     st.session_state['filter_params2'] = current_filter_params
-
-    st.session_state['flag2'] = flag2
-    st.session_state['flag3'] = flag3
-   
+    st.session_state['flag2'] = flag2   
     
     # Save the selected_state
-    if flag == 2: #or flag3 == 2:
-        print(f"Saving old_state EARLY to: {selected_state}")
+    if flag == 0: #If there was a filter change, want to save the selected state early
         st.session_state['old_state'] = selected_state
-
 
     # Check if the selected_state is valid
     if selected_state not in sorted_states:
-        print(f"Selected state {selected_state} is not in the list of available states. Resetting to {default_state}.")
-        selected_state = default_state
+        selected_state = default_state #If we have no state selected, because of filter changes or intializing, go to the default state
 
-    # Streamlit sidebar to select a state (scrollable list box)
-    print(f"Eary Selected State: {selected_state}")
-    st.session_state['old_state_early'] = selected_state
+    #Get our index for the current selected state
     selected_state_index = sorted_states.index(selected_state)
-    print(f"Selected State Index: {selected_state_index}")
+    #Build the radio button list and set its index based on our control logic above via the selected state
     selected_state = st.sidebar.radio("Select a State", sorted_states, index=selected_state_index)
-    print(f"Selected State Late: {selected_state}")
-    # Save the selected_state
-    print(f"Late Selected State: {selected_state}")
-    st.session_state['old_state_late'] = selected_state
-    if flag == 1:
-        print(f"Saving old_state LATER to: {selected_state}")
+    if flag == 1: #No filter change, saving selected_state after user selects it
         st.session_state['old_state'] = selected_state
-
-
-
-    
-
-
-
-
-
-
-
-
-
 
     # Set up the figure for the plot
     fig, ax = plt.subplots(figsize=(10, 6),dpi=120)
@@ -195,7 +134,6 @@ def generate_all_states_chart(df, start_year, end_year, parties, mode='A', selec
                 ax.axhline(y=votes_2020[0], color='purple', linestyle='--', linewidth=2, label=f'{target_party} 2020')
                 ax.axhline(y=non_2020_max, color='gray', linestyle='--', linewidth=2, label=f'{target_party} (Highest non-2020)')
 
-    
     # Dictionary mapping state abbreviations to full names
     state_abbr_to_full = {
         "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California",
@@ -240,7 +178,6 @@ def generate_all_states_chart(df, start_year, end_year, parties, mode='A', selec
     # Display the plot in Streamlit
 
     st.pyplot(fig)
-    print("\n")
 
 
 
