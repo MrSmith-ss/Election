@@ -45,14 +45,32 @@ def sort_states_by_mode(filtered_df, states, mode):
     else:
         return states
 
+@st.cache_data
+def create_all_states(filtered_df):
+    # Group by 'Year' and sum the votes for each party
+    all_states_df = filtered_df.groupby('Year')[['Republican', 'Democrat', 'Other']].sum().reset_index()
+    
+    # Add 'State' as 'USA' for each year
+    all_states_df['State'] = 'USA'  # Set 'State' to 'USA' for the aggregated row
+
+    # Reorder columns to make sure 'State' is the second column after 'Year'
+    all_states_df = all_states_df[['Year', 'State', 'Republican', 'Democrat', 'Other']]
+    
+    return all_states_df
+
+
 def generate_all_states_chart(df, start_year, end_year, parties, mode='A', selected_state=None):
     # Filter data for the selected year range
     filtered_df = filter_data(df, start_year, end_year)
-
+    # Example usage with filtered_df:
+    all_states = create_all_states(filtered_df)
+   
     # Get the unique states from the data
     unique_states = st.session_state.setdefault('unique_states', df['State'].unique())
 
     sorted_states = list(sort_states_by_mode(filtered_df, unique_states, mode))
+    # Prepend 'All States' to the front of the sorted list
+    sorted_states = ['USA'] + sorted_states
 
     # Store current filter parameters as a list
     current_filter_params = [start_year, end_year, mode, sorted(parties)]  # sorted(parties) to maintain order
@@ -102,7 +120,12 @@ def generate_all_states_chart(df, start_year, end_year, parties, mode='A', selec
     fig, ax = plt.subplots(figsize=(10, 6),dpi=120)
 
     # Filter data for the selected state
-    state_df = filtered_df[filtered_df['State'] == selected_state]
+    if selected_state == 'USA':
+        # Use the all_states data for plotting
+        state_df = all_states
+    else:
+        # For individual states, use the filtered data
+        state_df = filtered_df[filtered_df['State'] == selected_state]
 
     # Define custom colors for the parties
     party_colors = {
@@ -136,7 +159,7 @@ def generate_all_states_chart(df, start_year, end_year, parties, mode='A', selec
 
     # Dictionary mapping state abbreviations to full names
     state_abbr_to_full = {
-        "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California",
+        "USA" : "United States of America", "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California",
         "CO": "Colorado", "CT": "Connecticut", "DE": "Delaware", "FL": "Florida", "GA": "Georgia",
         "HI": "Hawaii", "ID": "Idaho", "IL": "Illinois", "IN": "Indiana", "IA": "Iowa",
         "KS": "Kansas", "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MD": "Maryland",
