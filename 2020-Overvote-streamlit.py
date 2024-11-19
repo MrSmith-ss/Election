@@ -50,40 +50,21 @@ def generate_all_states_chart(df, start_year, end_year, parties, mode='A', selec
     filtered_df = filter_data(df, start_year, end_year)
 
     # Get the unique states from the data
-    if 'unique_states' not in st.session_state:
-        unique_states = df['State'].unique()
-        st.session_state['unique_states'] = unique_states
-    else:
-        unique_states = st.session_state['unique_states']
+    unique_states = st.session_state.setdefault('unique_states', df['State'].unique())
 
     sorted_states = list(sort_states_by_mode(filtered_df, unique_states, mode))
 
-    print('Getting current filter params.')
     # Store current filter parameters as a list
     current_filter_params = [start_year, end_year, mode, sorted(parties)]  # sorted(parties) to maintain order
 
     # Retrieve previous filter parameters (if available)
-    if 'filter_params2' in st.session_state:
-        previous_filter_params = st.session_state['filter_params2']
-    else:
-        previous_filter_params = []
+    previous_filter_params = st.session_state.setdefault('filter_params2', [])
 
-    if 'old_state' in st.session_state:    
-        old_state = st.session_state['old_state']
-    else: 
-        print("Problem with setting old_state")
-        old_state = sorted_states[0]
+    # Retrieve old state (if available)
+    old_state = st.session_state.setdefault('old_state', sorted_states[0])
 
-    if 'flag2' in st.session_state:    
-        flag2 = st.session_state['flag2']
-    else:
-        flag2 = 0
-
-    # Debug: Print both current and previous filter parameters
-    #print(f"Current filter parameters: {current_filter_params}")
-    #print(f"Previous filter parameters: {previous_filter_params}")
-
-    #print(f"Old State: {old_state}")
+    # Retrieve old state (if available)
+    flag2 = st.session_state.setdefault('flag2', 0)
 
     # Compare the current filter params to the previous ones
     if current_filter_params != previous_filter_params:
@@ -92,8 +73,6 @@ def generate_all_states_chart(df, start_year, end_year, parties, mode='A', selec
         flag2 = 1
          # Retrieve the selected state from session state or use the first state
         selected_state = old_state
-        #print(selected_state)
-        
     else:
         print("Filters have not changed.")
         flag = 1
@@ -106,7 +85,7 @@ def generate_all_states_chart(df, start_year, end_year, parties, mode='A', selec
 
     #print(f"Saving flag2 to: {flag2}")
     st.session_state['flag2'] = flag2
-
+   
     # Save the selected_state
     if flag == 2:
         print(f"Saving old_state EARLY to: {selected_state}")
@@ -119,12 +98,13 @@ def generate_all_states_chart(df, start_year, end_year, parties, mode='A', selec
         selected_state = sorted_states[0]
 
     # Streamlit sidebar to select a state (scrollable list box)
-    print(f"Selected State: {selected_state}")
+   print(f"Eary Selected State: {selected_state}")
     selected_state_index = sorted_states.index(selected_state)
     print(f"Selected State Index: {selected_state_index}")
     selected_state = st.sidebar.radio("Select a State", sorted_states, index=selected_state_index)
-    print(f"Selected State New: {selected_state}")
+    print(f"Selected State Late: {selected_state}")
     # Save the selected_state
+    print(f"Late Selected State: {selected_state}")
     if flag == 1:
         print(f"Saving old_state LATER to: {selected_state}")
         st.session_state['old_state'] = selected_state
@@ -281,7 +261,7 @@ def main():
     # Display disclaimer if the end year is 2024
     if end_year == 2024:
         st.markdown(
-            "<span style='color: red; font-weight: bold;'>&#42;&#42;&#42;2024 Election 2222Data Is Preliminary&#42;&#42;&#42;</span>",
+            "<span style='color: red; font-weight: bold;'>&#42;&#42;&#42;2024 Election Data Is Preliminary&#42;&#42;&#42;</span>",
             unsafe_allow_html=True
         )
 
